@@ -60,10 +60,3 @@ jobs:
             echo "Differences found and saved to .github/diff.txt"
             cat .github/diff.txt  # Print the diff in the logs for debugging
           fi
-
-      # Step 6: Commit and Push the diff.txt to the repository under .github directory
-      - name: Commit and push diff.txt to repository
-        run: |
-          git add .github/diff.txt
-          git commit -m "Add diff.txt under .github directory"
-          git push origin HEAD  # Push the changes to the repository

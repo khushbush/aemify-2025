@@ -61,8 +61,12 @@ jobs:
           # Print the diff for debugging purposes
           cat diff.txt
 
-      # Step 6: Push the release tag to the target repository
-      - name: Push release tag to target repository
-        run: |
-          TAG_NAME=${{ steps.get_release_tag.outputs.tag_name }}
-          git push origin "$TAG_NAME"  # Push the tag to the target repository
+          # Upload the diff file as an artifact (optional, for later use)
+          echo "::set-output name=diff_file::$(pwd)/diff.txt"
+
+      # Step 6: Upload Diff as Artifact
+      - name: Upload Diff as Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: diff-file
+          path: diff.txt

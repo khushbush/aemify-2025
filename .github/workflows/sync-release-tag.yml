@@ -1,4 +1,4 @@
-name: Fetch Release Tag, Generate Diff, and Notify Teams
+name: Fetch Release Tagw, Generate Diff, and Notify Teams
 
 on:
   pull_request:

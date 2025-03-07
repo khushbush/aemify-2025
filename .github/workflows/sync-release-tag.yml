@@ -51,15 +51,19 @@ jobs:
           git fetch --all
 
           # Generate the diff between the release tag and the current commit
-          git diff "$TAG_NAME" HEAD > diff.txt
+          git diff "$TAG_NAME" HEAD > .github/diff.txt
 
           # Check if diff.txt was created and has content
-          if [ ! -s diff.txt ]; then
+          if [ ! -s .github/diff.txt ]; then
             echo "No differences found between $TAG_NAME and the current commit."
           else
-            echo "Differences found and saved to diff.txt"
-            cat diff.txt  # Print the diff in the logs for debugging
+            echo "Differences found and saved to .github/diff.txt"
+            cat .github/diff.txt  # Print the diff in the logs for debugging
           fi
 
-          # Upload the diff file as an artifact (optional, for later use)
-          echo "::set-output name=diff_file::$(pwd)/diff.txt"
+      # Step 6: Commit and Push the diff.txt to the repository under .github directory
+      - name: Commit and push diff.txt to repository
+        run: |
+          git add .github/diff.txt
+          git commit -m "Add diff.txt under .github directory"
+          git push origin HEAD  # Push the changes to the repository

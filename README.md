@@ -17,7 +17,7 @@ The main parts of the template are:
 * all: a single content package that embeds all of the compiled modules (bundles and content packages) including any vendor dependencies
 * analyse: this module runs analysis on the project which provides additional validation for deploying into AEMaaCS
 
-## How to build This project
+## How to build This project easy
 
 To build all the modules run in the project root directory the following command with Maven 3:
 

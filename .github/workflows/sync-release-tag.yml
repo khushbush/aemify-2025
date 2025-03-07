@@ -61,35 +61,8 @@ jobs:
           # Print the diff for debugging purposes
           cat diff.txt
 
-          # Upload the diff file as an artifact (optional, for later use)
-          echo "::set-output name=diff_file::$(pwd)/diff.txt"
-
       # Step 6: Push the release tag to the target repository
       - name: Push release tag to target repository
         run: |
           TAG_NAME=${{ steps.get_release_tag.outputs.tag_name }}
           git push origin "$TAG_NAME"  # Push the tag to the target repository
-
-      # Step 7: Upload Diff as Artifact
-      - name: Upload Diff as Artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: diff-file
-          path: diff.txt
-
-      # Step 8: Send notification to Microsoft Teams with Diff
-      - name: Send notification to Teams channel with Diff
-        run: |
-          TAG_NAME=${{ steps.get_release_tag.outputs.tag_name }}
-          MESSAGE="Release tag **$TAG_NAME** has been fetched from the source repository and pushed to the target repository. Here are the changes between the release tag and the current commit:\n"
-
-          # Include the diff content in the Teams message
-          DIFF_CONTENT=$(cat diff.txt)
-
-          # Construct the full message to send to Teams
-          FULL_MESSAGE="$MESSAGE\n\`\`\`$DIFF_CONTENT\`\`\`"
-
-          # Send the message to Microsoft Teams using the incoming webhook URL
-          curl -X POST -H "Content-Type: application/json" \
-            -d "{\"text\": \"$FULL_MESSAGE\"}" \
-            ${{ secrets.TEAMS_WEBHOOK_URL }}

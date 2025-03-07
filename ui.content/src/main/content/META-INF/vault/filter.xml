@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workspaceFilter version="1.0">
+    <filter root="/conf/concentrixpartnersandboxprogram" mode="merge"/>
+    <filter root="/content/concentrixpartnersandboxprogram" mode="merge"/>
+    <filter root="/content/dam/concentrixpartnersandboxprogram" mode="merge">
+        <exclude pattern="/content/dam/concentrixpartnersandboxprogram(/.*)?"/>
+        <include pattern="/content/dam/concentrixpartnersandboxprogram/jcr:content(/.*)?"/>
+    </filter>
+    <filter root="/content/dam/concentrixpartnersandboxprogram/asset.jpg" mode="merge"/>
+    <filter root="/content/experience-fragments/concentrixpartnersandboxprogram" mode="merge"/>
+</workspaceFilter>

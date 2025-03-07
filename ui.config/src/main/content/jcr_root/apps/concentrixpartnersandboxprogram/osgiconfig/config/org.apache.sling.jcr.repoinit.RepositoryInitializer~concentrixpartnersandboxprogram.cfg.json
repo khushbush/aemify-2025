@@ -1,0 +1,7 @@
+{
+    "scripts": [
+        "create path (sling:OrderedFolder) /content/dam/concentrixpartnersandboxprogram",
+        "create path (nt:unstructured) /content/dam/concentrixpartnersandboxprogram/jcr:content",
+        "set properties on /content/dam/concentrixpartnersandboxprogram/jcr:content\n  set cq:conf{String} to /conf/concentrixpartnersandboxprogram\n  set jcr:title{String} to \"Concentrix Partner Sandbox Program\"\nend"
+    ]
+}

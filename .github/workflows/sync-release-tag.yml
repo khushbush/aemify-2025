@@ -23,7 +23,7 @@ jobs:
       - name: Add source repository remote
         run: |
           # Add the source repository URL where the release tag is generated
-          git remote add source-repo https://khushbukrishnanand-shukla-concentrix-com:2ogfswLL5gQ1Ah8MA1Pw8QhLAJQnhDgZfnxMQrXxYaR67cWU2cz6JQQJ99BCACAAAAAFjjIdAAASAZDO2sVf@git.cloudmanager.adobe.com/prokarmaptrsd/aemify/
+          git remote add source-repo https://khushbukrishnanand-shukla-concentrix-com:2ogfswLL5gQ1Ah8MA1Pw8QhLAJQnhDgZfnxMQrXxYaR67cWU2cz6JQQJ99BCACAAAAAFjjIdAAASAZDO2sVf@git.git.cloudmanager.adobe.com/prokarmaptrsd/providence-poc/
           git fetch source-repo --tags  # Fetch all tags from the source repository
 
       # Step 4: Get the latest release tag from the source repository

@@ -1,0 +1,47 @@
+name: Sync Adobe Release Tag on PR Creation and Notify Teams
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]  # Trigger on PR open, update, or reopen
+
+jobs:
+  sync-release-and-notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the target repository (where the tag will be pushed)
+      - name: Checkout the target repository
+        uses: actions/checkout@v2
+
+      # Step 2: Set up Git for pushing tags
+      - name: Set up Git
+        run: |
+          git config --global user.name "khushbush"
+          git config --global user.email "khushbu.k.shukla@gmail.com"
+
+      # Step 3: Get the latest release tag from Adobe Cloud Manager API
+      - name: Fetch Adobe Cloud Manager Release Tag
+        id: fetch_tag
+        run: |
+          # Fetch the latest release tag from Adobe Cloud Manager
+          # Replace the placeholders with your actual Cloud Manager API credentials
+          response=$(curl -X POST 'https://ims-na1.adobelogin.com/ims/token/v3' -H 'Content-Type: application/x-www-form-urlencoded' -d 'grant_type=client_credentials&client_id=d9505ae8cea64cdbb1b1820f41402964&client_secret=p8e-eSpjJWs4R0NoHgGVd3_0aSLvFI207xeB&scope=openid,AdobeID,read_organizations,additional_info.projectedProductContext,read_pc.dma_aem_ams')
+
+          # Extract the release tag (assume the 'tag' field contains the required release tag)
+          TAG_NAME=$(echo $response | jq -r '.data[0].tag')
+
+          if [ "$TAG_NAME" == "null" ] || [ -z "$TAG_NAME" ]; then
+            echo "Error: Unable to fetch release tag from Cloud Manager."
+            exit 1
+          fi
+
+          echo "Found release tag: $TAG_NAME"
+          echo "::set-output name=tag_name::$TAG_NAME"
+
+      # Step 4: Push the release tag to the target Git repository
+      - name: Push release tag to GitHub repository
+        run: |
+          TAG_NAME=${{ steps.fetch_tag.outputs.tag_name }}
+          git tag -a "$TAG_NAME" -m "Release $TAG_NAME"
+          git push origin "$TAG_NAME"
+

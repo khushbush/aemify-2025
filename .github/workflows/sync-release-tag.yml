@@ -1,4 +1,4 @@
-name: Fetch Release Tag, Generate Diff, and Notify Teams
+name: Fetch Release Tagw, Generate Diff, and Notify Teams
 
 on:
   pull_request:
@@ -25,45 +25,34 @@ jobs:
           # Add the source repository URL where the release tag is generated
           git remote add source-repo https://khushbukrishnanand-shukla-concentrix-com:2ogfswLL5gQ1Ah8MA1Pw8QhLAJQnhDgZfnxMQrXxYaR67cWU2cz6JQQJ99BCACAAAAAFjjIdAAASAZDO2sVf@git.cloudmanager.adobe.com/prokarmaptrsd/providence-poc/
           git fetch source-repo --tags  # Fetch all tags from the source repository
-
-      # Step 4: Get the latest release tag from the source repository
-      - name: Get latest release tag from source repository
+  # Step 4: Get the latest release tag
+      - name: Get the latest release tag
         id: get_release_tag
         run: |
-          # Fetch the latest tag (assuming it's the latest tag in the source repository)
           TAG_NAME=$(git describe --tags $(git rev-list --tags --max-count=1))
+          echo "Latest release tag: $TAG_NAME"
+          echo "::set-output name=tag_name::$TAG_NAME"  # Store the latest release tag
 
-          if [ -z "$TAG_NAME" ]; then
-            echo "No tags found in the source repository."
-            exit 1
-          fi
-
-          echo "Found release tag: $TAG_NAME"
-          echo "::set-output name=tag_name::$TAG_NAME"  # Set output for use in subsequent steps
-
-      # Step 5: Generate Diff Between Release Tag and Current Commit
-      - name: Generate Diff Between Release Tag and Current Commit
+      # Step 5: Generate the diff between the latest release tag and current commit (HEAD)
+      - name: Generate diff between latest release tag and current commit
         id: generate_diff
         run: |
           TAG_NAME=${{ steps.get_release_tag.outputs.tag_name }}
           
-          # Ensure the latest changes are fetched and the tags are up to date
+          # Ensure that the repository is up to date with the latest changes
           git fetch --all
 
-          # Generate the diff between the release tag and the current commit
-          git diff "$TAG_NAME" HEAD > .github/diff.txt
+          # Generate the diff between the latest release tag and current commit (HEAD)
+          git diff "$TAG_NAME" HEAD > diff.txt
 
-          # Check if diff.txt was created and has content
-          if [ ! -s .github/diff.txt ]; then
-            echo "No differences found between $TAG_NAME and the current commit."
+          # Print the content of diff.txt to the GitHub Actions logs
+          echo "Contents of diff.txt:"
+          cat diff.txt
+
+          # Check if the diff is not empty
+          if [ ! -s diff.txt ]; then
+            echo "No differences found between the release tag $TAG_NAME and the current commit."
+            exit 1
           else
-            echo "Differences found and saved to .github/diff.txt"
-            cat .github/diff.txt  # Print the diff in the logs for debugging
+            echo "Differences found and saved to diff.txt"
           fi
-
-      # Step 6: Commit and Push the diff.txt to the repository under .github directory
-      - name: Commit and push diff.txt to repository
-        run: |
-          git add .github/diff.txt
-          git commit -m "Add diff.txt under .github directory"
-          git push origin HEAD  # Push the changes to the repository

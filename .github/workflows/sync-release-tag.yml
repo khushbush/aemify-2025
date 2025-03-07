@@ -1,47 +1,95 @@
-name: Sync Adobe Release Tag on PR Creation and Notify Teams
+name: Fetch Release Tag, Generate Diff, and Notify Teams
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]  # Trigger on PR open, update, or reopen
 
 jobs:
-  sync-release-and-notify:
+  fetch-sync-and-diff:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the target repository (where the tag will be pushed)
-      - name: Checkout the target repository
+      # Step 1: Checkout the target repository (the one you want to push the tag to)
+      - name: Checkout target repository
         uses: actions/checkout@v2
 
-      # Step 2: Set up Git for pushing tags
+        # Step 2: Set up Git for pushing tags
       - name: Set up Git
         run: |
           git config --global user.name "khushbush"
           git config --global user.email "khushbu.k.shukla@gmail.com"
 
-      # Step 3: Get the latest release tag from Adobe Cloud Manager API
-      - name: Fetch Adobe Cloud Manager Release Tag
-        id: fetch_tag
+      # Step 3: Add the source repository as a remote to fetch the release tag
+      - name: Add source repository remote
         run: |
-          # Fetch the latest release tag from Adobe Cloud Manager
-          # Replace the placeholders with your actual Cloud Manager API credentials
-          response=$(curl -X POST 'https://ims-na1.adobelogin.com/ims/token/v3' -H 'Content-Type: application/x-www-form-urlencoded' -d 'grant_type=client_credentials&client_id=d9505ae8cea64cdbb1b1820f41402964&client_secret=p8e-eSpjJWs4R0NoHgGVd3_0aSLvFI207xeB&scope=openid,AdobeID,read_organizations,additional_info.projectedProductContext,read_pc.dma_aem_ams')
+          # Add the source repository URL where the release tag is generated
+          git remote add source-repo https://git.cloudmanager.adobe.com/prokarmaptrsd/providence-poc/
+          git fetch source-repo --tags  # Fetch all tags from the source repository
 
-          # Extract the release tag (assume the 'tag' field contains the required release tag)
-          TAG_NAME=$(echo $response | jq -r '.data[0].tag')
+      # Step 4: Get the latest release tag from the source repository
+      - name: Get latest release tag from source repository
+        id: get_release_tag
+        run: |
+          # Fetch the latest tag (assuming it's the latest tag in the source repository)
+          TAG_NAME=$(git describe --tags $(git rev-list --tags --max-count=1))
 
-          if [ "$TAG_NAME" == "null" ] || [ -z "$TAG_NAME" ]; then
-            echo "Error: Unable to fetch release tag from Cloud Manager."
+          if [ -z "$TAG_NAME" ]; then
+            echo "No tags found in the source repository."
             exit 1
           fi
 
           echo "Found release tag: $TAG_NAME"
-          echo "::set-output name=tag_name::$TAG_NAME"
+          echo "::set-output name=tag_name::$TAG_NAME"  # Set output for use in subsequent steps
 
-      # Step 4: Push the release tag to the target Git repository
-      - name: Push release tag to GitHub repository
+      # Step 5: Generate Diff Between Release Tag and Current Commit
+      - name: Generate Diff Between Release Tag and Current Commit
+        id: generate_diff
         run: |
-          TAG_NAME=${{ steps.fetch_tag.outputs.tag_name }}
-          git tag -a "$TAG_NAME" -m "Release $TAG_NAME"
-          git push origin "$TAG_NAME"
+          TAG_NAME=${{ steps.get_release_tag.outputs.tag_name }}
+          
+          # Ensure the latest changes are fetched and the tags are up to date
+          git fetch --all
 
+          # Generate the diff between the release tag and the current commit
+          git diff "$TAG_NAME" HEAD > diff.txt
+
+          if [ ! -s diff.txt ]; then
+            echo "No differences found between $TAG_NAME and the current commit."
+            exit 0
+          fi
+
+          # Print the diff for debugging purposes
+          cat diff.txt
+
+          # Upload the diff file as an artifact (optional, for later use)
+          echo "::set-output name=diff_file::$(pwd)/diff.txt"
+
+      # Step 6: Push the release tag to the target repository
+      - name: Push release tag to target repository
+        run: |
+          TAG_NAME=${{ steps.get_release_tag.outputs.tag_name }}
+          git push origin "$TAG_NAME"  # Push the tag to the target repository
+
+      # Step 7: Upload Diff as Artifact
+      - name: Upload Diff as Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: diff-file
+          path: diff.txt
+
+      # Step 8: Send notification to Microsoft Teams with Diff
+      - name: Send notification to Teams channel with Diff
+        run: |
+          TAG_NAME=${{ steps.get_release_tag.outputs.tag_name }}
+          MESSAGE="Release tag **$TAG_NAME** has been fetched from the source repository and pushed to the target repository. Here are the changes between the release tag and the current commit:\n"
+
+          # Include the diff content in the Teams message
+          DIFF_CONTENT=$(cat diff.txt)
+
+          # Construct the full message to send to Teams
+          FULL_MESSAGE="$MESSAGE\n\`\`\`$DIFF_CONTENT\`\`\`"
+
+          # Send the message to Microsoft Teams using the incoming webhook URL
+          curl -X POST -H "Content-Type: application/json" \
+            -d "{\"text\": \"$FULL_MESSAGE\"}" \
+            ${{ secrets.TEAMS_WEBHOOK_URL }}

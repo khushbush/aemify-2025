@@ -25,8 +25,7 @@ jobs:
           # Add the source repository URL where the release tag is generated
           git remote add source-repo https://khushbukrishnanand-shukla-concentrix-com:2ogfswLL5gQ1Ah8MA1Pw8QhLAJQnhDgZfnxMQrXxYaR67cWU2cz6JQQJ99BCACAAAAAFjjIdAAASAZDO2sVf@git.cloudmanager.adobe.com/prokarmaptrsd/providence-poc/
           git fetch source-repo --tags  # Fetch all tags from the source repository
-
-    # Step 4: Get the latest release tag
+  # Step 4: Get the latest release tag
       - name: Get the latest release tag
         id: get_release_tag
         run: |
@@ -45,6 +44,10 @@ jobs:
 
           # Generate the diff between the latest release tag and current commit (HEAD)
           git diff "$TAG_NAME" HEAD > diff.txt
+
+          # Print the content of diff.txt to the GitHub Actions logs
+          echo "Contents of diff.txt:"
+          cat diff.txt
 
           # Check if the diff is not empty
           if [ ! -s diff.txt ]; then

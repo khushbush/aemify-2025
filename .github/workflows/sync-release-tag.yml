@@ -53,13 +53,13 @@ jobs:
           # Generate the diff between the release tag and the current commit
           git diff "$TAG_NAME" HEAD > diff.txt
 
+          # Check if diff.txt was created and has content
           if [ ! -s diff.txt ]; then
             echo "No differences found between $TAG_NAME and the current commit."
-            exit 0
+          else
+            echo "Differences found and saved to diff.txt"
+            cat diff.txt  # Print the diff in the logs for debugging
           fi
-
-          # Print the diff for debugging purposes
-          cat diff.txt
 
           # Upload the diff file as an artifact (optional, for later use)
           echo "::set-output name=diff_file::$(pwd)/diff.txt"
